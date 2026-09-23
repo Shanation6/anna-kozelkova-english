@@ -196,6 +196,31 @@
         });
         buttons.append(button);
       }
+      const replaceInput = document.createElement('input');
+      replaceInput.type = 'file';
+      replaceInput.accept = 'image/jpeg,image/png,image/webp';
+      replaceInput.hidden = true;
+      replaceInput.addEventListener('change', () => {
+        const file = replaceInput.files[0];
+        if (!file) return;
+        const targetExtension = photo.src.split('.').pop().toLowerCase().replace('jpeg', 'jpg');
+        const fileExtension = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[file.type];
+        if (!fileExtension || fileExtension !== targetExtension || file.size > 5 * 1024 * 1024) {
+          setMessage('#save-message', `Для замены нужен файл ${targetExtension.toUpperCase()} размером до 5 МБ.`, 'error');
+          replaceInput.value = '';
+          return;
+        }
+        if (photo.preview) URL.revokeObjectURL(photo.preview);
+        photo.preview = URL.createObjectURL(file);
+        pendingUploads.set(photo.src, file);
+        image.src = photo.preview;
+        markDirty();
+        replaceInput.value = '';
+      });
+      const replace = el('button', 'small-button', 'Заменить фото');
+      replace.type = 'button';
+      replace.addEventListener('click', () => replaceInput.click());
+      buttons.append(replace, replaceInput);
       const remove = el('button', 'small-button danger', 'Удалить');
       remove.type = 'button';
       const isProtected = protectedPaths.has(photo.src);
